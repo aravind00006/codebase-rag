@@ -1,0 +1,42 @@
+# Core LLM & Orchestration
+langchain==0.2.16
+langchain-openai==0.1.23
+langchain-community==0.2.16
+langsmith==0.1.117
+openai==1.45.0
+
+# Vector DB
+chromadb==0.5.7
+pinecone-client==4.1.2
+
+# Sparse Retrieval
+rank-bm25==0.2.2
+
+# Embeddings & Re-ranking
+sentence-transformers==3.1.0
+torch==2.4.1
+
+# Evaluation
+ragas==0.1.20
+datasets==3.0.0
+
+# API & Frontend
+fastapi==0.115.0
+uvicorn==0.30.6
+streamlit==1.38.0
+pydantic==2.9.2
+
+# Ingestion
+gitpython==3.1.43
+pygments==2.18.0
+
+# Utilities
+python-dotenv==1.0.1
+tiktoken==0.7.0
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.14.1
+
+# Notebooks
+jupyter==1.1.1
+matplotlib==3.9.2
