@@ -13,10 +13,6 @@
 
 [**Live Demo**](https://huggingface.co/spaces/YOUR_USERNAME/rag-codebase-qa) · [**Evaluation Results**](#-evaluation-results) · [**Architecture**](#-architecture) · [**Quick Start**](#-quick-start)
 
-<br/>
-
-> *"How does FastAPI handle dependency injection?"* — answered in under 1.5 seconds, with exact source file and line numbers.
-
 </div>
 
 ---
@@ -54,7 +50,7 @@ GitHub Repo URL
 │   Reciprocal Rank Fusion → top-10                            │
 │         │                                                    │
 │         ▼                                                    │
-│   Cross-Encoder Re-ranking (ms-marco-MiniLM-L-6-v2) → top-5 │
+│   Cross-Encoder Re-ranking (ms-marco-MiniLM-L-6-v2) → top-5  │
 └───────────────────────────┬──────────────────────────────────┘
                             │
                             ▼
@@ -207,7 +203,7 @@ pip install -r requirements.txt
 ### 2. Configure Environment
 
 ```bash
-cp .env.example .env
+cp .env
 # Open .env and add your API keys
 ```
 
@@ -274,69 +270,18 @@ docker-compose up --build
 
 ---
 
-## 🌐 API Reference
+## 🌐 API Endpoints
 
-### `POST /index`
-Index a GitHub repository.
+The FastAPI backend exposes four endpoints once the server is running at `http://localhost:8000`:
 
-```bash
-curl -X POST http://localhost:8000/index \
-  -H "Content-Type: application/json" \
-  -d '{
-    "repo_url": "https://github.com/tiangolo/fastapi",
-    "chunk_strategy": "ast"
-  }'
-```
+| Method | Endpoint | What it does |
+|:---|:---|:---|
+| POST | `/index` | Index a GitHub repository with your chosen strategy |
+| POST | `/query` | Ask a question and get a cited answer back |
+| GET | `/eval/results` | Fetch stored evaluation results |
+| GET | `/health` | Check if the server is running |
 
-```json
-{
-  "status": "indexed",
-  "repo_name": "tiangolo_fastapi",
-  "num_chunks": 1847,
-  "time_taken_s": 42.3,
-  "estimated_cost_usd": 0.0023,
-  "collection_name": "tiangolo_fastapi_ast"
-}
-```
-
-### `POST /query`
-Ask a question about an indexed repository.
-
-```bash
-curl -X POST http://localhost:8000/query \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "How does FastAPI handle dependency injection?",
-    "repo_name": "tiangolo_fastapi",
-    "chunk_strategy": "ast"
-  }'
-```
-
-```json
-{
-  "answer": "FastAPI implements dependency injection via the `Depends()` function...",
-  "sources": [
-    {
-      "file_path": "fastapi/dependencies/utils.py",
-      "function_name": "solve_dependencies",
-      "start_line": "127",
-      "end_line": "198",
-      "language": "python",
-      "chunk_preview": "async def solve_dependencies(...",
-      "score": 0.94
-    }
-  ],
-  "tokens_used": 1243,
-  "latency_ms": 1182,
-  "model": "gpt-4o-mini"
-}
-```
-
-### `GET /eval/results`
-Retrieve stored evaluation results.
-
-### `GET /health`
-Liveness check — returns `{"status": "ok"}`.
+You can explore and test all endpoints interactively via the auto-generated docs at `http://localhost:8000/docs`.
 
 ---
 
