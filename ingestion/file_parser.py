@@ -97,3 +97,74 @@ def parse_documents(docs: list[Document]) -> list[Document]:
     logger.info("Document parsing complete: total=%d", len(parsed))
     return parsed
 
+# ---------------------------------------------------------------------------
+# Language-specific parsers (internal)
+# ---------------------------------------------------------------------------
+
+def _parse_python(content: str, metadata: dict) -> None:
+    # use ast for accuracy, fall back to regex if the file has syntax errors
+    try:
+        tree = ast.parse(content)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                metadata["functions"].append(node.name)
+            elif isinstance(node, ast.ClassDef):
+                metadata["classes"].append(node.name)
+    except SyntaxError:
+        logger.debug("AST parse failed — using regex fallback for Python file")
+        _parse_generic(content, metadata)
+
+
+def _parse_markdown(content: str, metadata: dict) -> None:
+    # grab ATX headings (# through ######)
+    for line in content.splitlines():
+        m = re.match(r"^(#{1,6})\s+(.+)", line)
+        if m:
+            metadata["headings"].append(m.group(2).strip())
+
+
+def _parse_js_ts(content: str, metadata: dict) -> None:
+    # js/ts has too many ways to define a function, so we need multiple patterns
+    func_patterns = [
+        r"\bfunction\s+(\w+)\s*\(",
+        r"(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(",
+        r"(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\w+\s*=>",
+        r"async\s+function\s+(\w+)\s*\(",
+        r"^\s*(\w+)\s*\([^)]*\)\s*\{",
+    ]
+    for p in func_patterns:
+        metadata["functions"].extend(re.findall(p, content, re.MULTILINE))
+
+    metadata["classes"].extend(re.findall(r"\bclass\s+(\w+)", content))
+
+    # dedupe but keep order
+    metadata["functions"] = list(dict.fromkeys(metadata["functions"]))
+    metadata["classes"]   = list(dict.fromkeys(metadata["classes"]))
+
+
+def _parse_java(content: str, metadata: dict) -> None:
+    metadata["classes"].extend(
+        re.findall(r"\b(?:class|interface|enum)\s+(\w+)", content)
+    )
+    metadata["functions"].extend(
+        re.findall(
+            r"(?:public|private|protected|static|\s)+[\w<>\[\]]+\s+(\w+)\s*\(",
+            content,
+        )
+    )
+
+
+def _parse_go(content: str, metadata: dict) -> None:
+    metadata["functions"].extend(
+        re.findall(r"^func\s+(?:\(\w+\s+\*?\w+\)\s+)?(\w+)\s*\(", content, re.MULTILINE)
+    )
+    # structs are the closest thing go has to classes
+    metadata["classes"].extend(
+        re.findall(r"^type\s+(\w+)\s+struct", content, re.MULTILINE)
+    )
+
+
+def _parse_generic(content: str, metadata: dict) -> None:
+    # last resort — works for most c-style langs
+    metadata["functions"].extend(re.findall(r"\bfunction\s+(\w+)\s*\(", content))
+    metadata["classes"].extend(re.findall(r"\bclass\s+(\w+)", content))
