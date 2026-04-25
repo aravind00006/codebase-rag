@@ -73,14 +73,9 @@ class RepoLoader:
     """
     Loads a GitHub repository and returns Documents ready for chunking.
 
-    Each returned Document carries metadata:
-        file_path, language, repo_name, file_size,
-        last_modified, file_name, extension.
+    metadata:
+        file_path, language, repo_name, file_size etc.
 
-    Example usage::
-
-        loader = RepoLoader()
-        docs = loader.load("https://github.com/tiangolo/fastapi")
     """
 
     def __init__(self, repos_dir: str = "./repos") -> None:
@@ -93,20 +88,7 @@ class RepoLoader:
     # ------------------------------------------------------------------
 
     def load(self, source: str) -> list[Document]:
-        """
-        Load a repo from a GitHub URL or a local filesystem path.
-
-        Args:
-            source: GitHub URL (``https://github.com/owner/repo``)
-                    or a local directory path.
-
-        Returns:
-            List of Document objects, one per supported source file.
-
-        Raises:
-            git.GitCommandError: If cloning fails.
-            FileNotFoundError: If a local path does not exist.
-        """
+        # takes a source, returns a list of docs
         if source.startswith("https://github.com") or source.startswith("git@"):
             local_path = self._clone_repo(source)
             repo_name = self._extract_repo_name(source)
@@ -128,7 +110,7 @@ class RepoLoader:
     # ------------------------------------------------------------------
 
     def _clone_repo(self, url: str) -> Path:
-        """Clone *url* into ``repos_dir`` (shallow, depth=1) if not cached."""
+        """Clone url into repos_dir, if not cached."""
         repo_name = self._extract_repo_name(url)
         local_path = self.repos_dir / repo_name
 
@@ -248,5 +230,5 @@ class RepoLoader:
 # ---------------------------------------------------------------------------
 
 def get_repo_id(source: str) -> str:
-    """Return a stable 12-character hex ID for *source* (URL or path)."""
+    """Return a stable 12-character hex ID for source (URL or path)."""
     return hashlib.md5(source.encode()).hexdigest()[:12]
