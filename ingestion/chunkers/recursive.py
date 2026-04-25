@@ -24,7 +24,9 @@ _CODE_SEPARATORS: list[str] = [
 
 
 def chunk_documents(documents: list[Document]) -> list[Document]:
-    # splits each doc and tags chunks with strategy/index metadata
+    """
+    Chunk documents with a code-aware recursive character splitter.
+    """
     logger.info(
         "Recursive chunking: documents=%d chunk_size=%d overlap=%d",
         len(documents),
