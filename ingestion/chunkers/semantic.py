@@ -53,3 +53,66 @@ def chunk_documents(documents: list[Document]) -> list[Document]:
         len(all_chunks),
     )
     return all_chunks
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _semantic_split(doc: Document, model) -> list[Document]:
+    """Split a single document by cosine similarity between adjacent sentences."""
+    file_path = doc.metadata.get("file_path", "unknown")
+
+    sentences = [s.strip() for s in doc.page_content.split("\n") if s.strip()]
+    if not sentences:
+        return []
+
+    if len(sentences) == 1:
+        return [_make_chunk(doc, sentences, 0, file_path, 1)]
+
+    embeddings: np.ndarray = model.encode(sentences, convert_to_numpy=True)
+
+    groups: list[list[str]] = []
+    current_group: list[str] = [sentences[0]]
+
+    for i in range(1, len(sentences)):
+        sim = float(_cosine_similarity(embeddings[i - 1], embeddings[i]))
+        if sim >= SIMILARITY_THRESHOLD:
+            current_group.append(sentences[i])
+        else:
+            groups.append(current_group)
+            current_group = [sentences[i]]
+
+    groups.append(current_group)
+
+    return [
+        _make_chunk(doc, group, idx, file_path, len(groups))
+        for idx, group in enumerate(groups)
+    ]
+
+
+def _make_chunk(
+    doc: Document,
+    sentences: list[str],
+    index: int,
+    file_path: str,
+    total: int,
+) -> Document:
+    return Document(
+        page_content="\n".join(sentences),
+        metadata={
+            **doc.metadata,
+            "chunk_strategy":       "semantic",
+            "chunk_id":             f"{file_path}_semantic_{index}",
+            "chunk_index":          index,
+            "total_chunks":         total,
+            "similarity_threshold": SIMILARITY_THRESHOLD,
+        },
+    )
+
+
+def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    """Cosine similarity between two 1-D vectors."""
+    denom = np.linalg.norm(a) * np.linalg.norm(b)
+    if denom == 0:
+        return 0.0
+    return float(np.dot(a, b) / denom)
