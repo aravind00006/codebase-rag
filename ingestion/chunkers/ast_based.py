@@ -41,7 +41,6 @@ def chunk_documents(documents: list[Document]) -> list[Document]:
 
         chunks = _chunk_python(doc)
         if chunks is None:
-            # Syntax error in file — hand off to recursive chunker
             logger.warning(
                 "AST parse failed — using recursive fallback: file=%s",
                 doc.metadata.get("file_path", "unknown"),
@@ -69,3 +68,98 @@ def chunk_documents(documents: list[Document]) -> list[Document]:
         len(fallback_docs),
     )
     return all_chunks
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _chunk_python(doc: Document) -> list[Document] | None:
+    """
+    Parse *doc* with ``ast`` and return one chunk per top-level node.
+
+    Returns ``None`` if the file cannot be parsed (syntax error).
+    """
+    source = doc.page_content
+    file_path = doc.metadata.get("file_path", "unknown")
+    lines = source.splitlines(keepends=True)
+
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as exc:
+        logger.debug(
+            "SyntaxError in %s (line %s): %s", file_path, exc.lineno, exc.msg
+        )
+        return None
+
+    chunks: list[Document] = []
+    covered_lines: set[int] = set()
+
+    for node in ast.iter_child_nodes(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+
+        start = node.lineno - 1   # convert to 0-indexed
+        end = node.end_lineno     # exclusive upper bound for slicing
+
+        node_source = "".join(lines[start:end])
+        covered_lines.update(range(start, end))
+
+        # .get() with fallback so an unexpected node type never crashes here
+        node_type = {
+            ast.FunctionDef:      "function",
+            ast.AsyncFunctionDef: "async_function",
+            ast.ClassDef:         "class",
+        }.get(type(node), "unknown")
+
+        # Grab first line of docstring only — keeps metadata compact
+        docstring = ""
+        try:
+            raw = ast.get_docstring(node)
+            if raw:
+                docstring = raw.splitlines()[0][:120]
+        except Exception:
+            pass
+
+        chunks.append(
+            Document(
+                page_content=textwrap.dedent(node_source),
+                metadata={
+                    **doc.metadata,
+                    "chunk_strategy": "ast",
+                    "node_name":      node.name,
+                    "node_type":      node_type,
+                    "start_line":     node.lineno,
+                    "end_line":       node.end_lineno,
+                    "docstring":      docstring,
+                    "chunk_id":       f"{file_path}::{node.name}",
+                },
+            )
+        )
+
+    # Collect module-level code not inside any function or class
+    module_lines = [
+        line
+        for i, line in enumerate(lines)
+        if i not in covered_lines and line.strip()
+    ]
+    if module_lines:
+        module_source = "".join(module_lines)
+        if len(module_source.strip()) > 20:  # skip trivially short remnants
+            chunks.append(
+                Document(
+                    page_content=module_source,
+                    metadata={
+                        **doc.metadata,
+                        "chunk_strategy": "ast",
+                        "node_name":  "__module__",
+                        "node_type":  "module_level",
+                        "start_line": 1,
+                        "end_line":   len(lines),
+                        "docstring":  "",
+                        "chunk_id":   f"{file_path}::__module__",
+                    },
+                )
+            )
+
+    logger.debug("AST chunks created: file=%s chunks=%d", file_path, len(chunks))
+    return chunks if chunks else None
