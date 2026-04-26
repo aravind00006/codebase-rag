@@ -1,4 +1,5 @@
 """fixed_size.py — strategy 1: dumb but reliable 
+
 token-window chunking splits everything into 512-token 
 windows with 50-token overlap main downside: doesn't care
 about code structure, can cut mid-function used as the baseline.

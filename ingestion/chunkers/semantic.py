@@ -1,5 +1,6 @@
 """
 semantic.py — Strategy 4: Semantic similarity-based chunking.
+
 Groups sentences into chunks by embedding each sentence with
 sentence-transformers.
 """

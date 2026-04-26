@@ -1,7 +1,7 @@
 """
 ast_based.py — Strategy 3: AST-aware chunking at function/class boundaries.
 
-Uses Python's built-in ``ast`` module to split source files at *semantic*
+Uses Python's built-in ast module to split source files at semantic
 boundaries — one chunk per top-level function or class definition — so that
 each chunk is always a complete, syntactically valid unit.
 

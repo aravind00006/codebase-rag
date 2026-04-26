@@ -1,6 +1,9 @@
-# recursive.py — splits documents using langchain's recursive character splitter
-# tries separators in order: class → def → blank lines → lines → words → chars
-
+"""
+recursive.py — Strategy 2: Recursive character text splitting.
+ 
+Uses LangChain's ``RecursiveCharacterTextSplitter`` with code-aware
+separators.  The splitter tries each separator in order and only falls
+"""
 
 import logging
 from __future__ import annotations
