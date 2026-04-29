@@ -35,3 +35,70 @@ def _get_chroma_client(persist_dir: str = "./chroma_db") -> chromadb.ClientAPI:
         logger.debug("Initialising ChromaDB client: dir=%s", persist_dir)
         _chroma_client = chromadb.PersistentClient(path=persist_dir)
     return _chroma_client
+
+class DenseRetriever:
+    """
+    Retrieves documents via cosine similarity in a ChromaDB collection.
+    """
+
+    def __init__(
+        self,
+        collection_name: str,
+        persist_dir: str = "./chroma_db",
+        top_k: int = 20,
+    ) -> None:
+        self.collection_name = collection_name
+        self.top_k = top_k
+        self.embeddings = _get_embeddings()
+
+        client = _get_chroma_client(persist_dir)
+        self.collection = client.get_collection(collection_name)
+
+        logger.info(
+            "DenseRetriever ready: collection=%s default_top_k=%d",
+            collection_name,
+            top_k,
+        )
+    def retrieve(
+        self,
+        query: str,
+        top_k: Optional[int] = None,
+        doc_type_filter: Optional[str] = None,
+    ) -> list[dict]:
+        k = top_k or self.top_k
+
+        logger.debug(
+            "Dense retrieval: query_preview='%s...' top_k=%d filter=%s",
+            query[:50],
+            k,
+            doc_type_filter,
+        )
+
+        query_embedding = self.embeddings.embed_query(query)
+
+        results = self.collection.query(
+            query_embeddings=[query_embedding],
+            n_results=k,
+            include=["documents", "metadatas", "distances"],
+        )
+
+        docs: list[dict] = []
+        for i, (text, meta, dist) in enumerate(
+            zip(
+                results["documents"][0],
+                results["metadatas"][0],
+                results["distances"][0],
+            )
+        ):
+            score = 1.0 - dist  # basic score, will fix next commit
+            docs.append(
+                {
+                    "text": text,
+                    "metadata": meta,
+                    "score": score,
+                    "rank": i,
+                    "retriever": "dense",
+                }
+            )
+
+        return docs
