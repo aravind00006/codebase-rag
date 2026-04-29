@@ -176,7 +176,7 @@ rag-codebase-qa/
 ├── docker-compose.yml          # API + frontend containers
 ├── Dockerfile
 ├── requirements.txt
-└── .env.example
+└── .env
 ```
 
 ---
