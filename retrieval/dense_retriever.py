@@ -90,7 +90,7 @@ class DenseRetriever:
                 results["distances"][0],
             )
         ):
-            score = 1.0 - dist  # basic score, will fix next commit
+            score = max(0.0, 1.0 - dist / 2.0)   # basic score, will fix next commit
             docs.append(
                 {
                     "text": text,
