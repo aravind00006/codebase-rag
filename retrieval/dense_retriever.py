@@ -76,12 +76,17 @@ class DenseRetriever:
 
         query_embedding = self.embeddings.embed_query(query)
 
+        where_clause = (
+            {"doc_type": {"$eq": doc_type_filter}} if doc_type_filter else None
+        )
+ 
         results = self.collection.query(
             query_embeddings=[query_embedding],
             n_results=k,
+            where=where_clause,
             include=["documents", "metadatas", "distances"],
         )
-
+ 
         docs: list[dict] = []
         for i, (text, meta, dist) in enumerate(
             zip(
@@ -90,7 +95,7 @@ class DenseRetriever:
                 results["distances"][0],
             )
         ):
-            score = max(0.0, 1.0 - dist / 2.0)   # basic score, will fix next commit
+            score = 1.0 - dist  # cosine distance → similarity
             docs.append(
                 {
                     "text": text,
@@ -100,5 +105,10 @@ class DenseRetriever:
                     "retriever": "dense",
                 }
             )
-
+ 
+        logger.debug(
+            "Dense retrieval complete: returned=%d top_score=%.4f",
+            len(docs),
+            docs[0]["score"] if docs else 0.0,
+        )
         return docs
