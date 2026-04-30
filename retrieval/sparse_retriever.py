@@ -1,18 +1,8 @@
 """
 sparse_retriever.py — BM25 keyword-based retrieval.
 
-Loads a pre-built ``BM25Okapi`` index (pickled during ingestion) and scores
-all corpus documents against a tokenised query.  Scores are normalised to
-``[0, 1]`` by dividing by the per-query maximum before returning.
-
-BM25 complements dense retrieval by excelling on:
-- Exact identifier lookups (``serialize_response``, ``solve_dependencies``)
-- Rare tokens absent from the embedding model's training distribution
-- Short, keyword-heavy queries
-
-Used as one leg of the Hybrid RRF retriever.
 """
-
+import re
 import pickle
 import logging
 import numpy as np
@@ -62,7 +52,7 @@ class SparseRetriever:
             "Sparse retrieval: query_preview='%s...' top_k=%d", query[:50], top_k
         )
 
-        tokenized_query = query.lower().split()
+        tokenized_query = re.findall(r"\w+", query.lower())
         raw_scores: np.ndarray = self.bm25.get_scores(tokenized_query)
 
         max_score = float(raw_scores.max())
