@@ -42,3 +42,12 @@ class SparseRetriever:
                 f"BM25 index not found: {bm25_path}\n"
                 "Run the ingestion pipeline to build the index."
             )
+    def retrieve(self, query: str, top_k: int = 20) -> list[dict]:
+        """
+        Retrieve the *top_k* highest-scoring BM25 results for query.
+
+        """
+        logger.debug(
+            "Sparse retrieval: query_preview='%s...' top_k=%d", query[:50], top_k
+        )
+        return []  # placeholder 
