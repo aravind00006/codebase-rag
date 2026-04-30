@@ -1,0 +1,30 @@
+"""
+reranker.py — Cross-encoder re-ranking for precision boost.
+A cross-encoder jointly encodes (query, passage)
+pairs — unlike bi-encoders that embed them independently.
+
+"""
+
+import numpy as np
+import logging
+from __future__ import annotations
+
+
+logger = logging.getLogger(__name__)
+
+RERANKER_MODEL: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+MAX_LENGTH: int = 512  # Maximum token length per pair
+
+# Module-level — loaded once per process to avoid repeated
+# disk reads and model initialisation overhead
+_model = None
+
+
+def _get_model() -> "CrossEncoder":
+    global _model
+    if _model is None:
+        from sentence_transformers import CrossEncoder
+        logger.info("Loading cross-encoder model: %s", RERANKER_MODEL)
+        _model = CrossEncoder(RERANKER_MODEL, max_length=MAX_LENGTH)
+        logger.info("Cross-encoder model loaded successfully")
+    return _model
