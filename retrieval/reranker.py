@@ -28,3 +28,18 @@ def _get_model() -> "CrossEncoder":
         _model = CrossEncoder(RERANKER_MODEL, max_length=MAX_LENGTH)
         logger.info("Cross-encoder model loaded successfully")
     return _model
+
+class Reranker:
+    """
+    Re-ranks a list of retrieved chunks using a cross-encoder.
+
+    """
+
+    def __init__(self, top_k: int = 5) -> None:
+        self.top_k = top_k
+        self.model = _get_model()
+        logger.debug(
+            "Reranker initialised: top_k=%d model=%s",
+            top_k,
+            RERANKER_MODEL,
+        )
