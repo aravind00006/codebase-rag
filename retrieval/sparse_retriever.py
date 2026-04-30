@@ -1,9 +1,18 @@
 """
 sparse_retriever.py — BM25 keyword-based retrieval.
 
+Loads a pre-built ``BM25Okapi`` index (pickled during ingestion) and scores
+all corpus documents against a tokenised query.  Scores are normalised to
+``[0, 1]`` by dividing by the per-query maximum before returning.
+
+BM25 complements dense retrieval by excelling on:
+- Exact identifier lookups (``serialize_response``, ``solve_dependencies``)
+- Rare tokens absent from the embedding model's training distribution
+- Short, keyword-heavy queries
+
+Used as one leg of the Hybrid RRF retriever.
 """
 
-import re
 import pickle
 import logging
 import numpy as np
@@ -13,6 +22,7 @@ from __future__ import annotations
 
 logger = logging.getLogger(__name__)
 
+
 class SparseRetriever:
     """
     Keyword retrieval via a pre-built BM25Okapi index.
@@ -21,6 +31,12 @@ class SparseRetriever:
 
     def __init__(self, collection_name: str, bm25_dir: str = "./bm25_indexes") -> None:
         bm25_path = Path(bm25_dir) / f"{collection_name}.pkl"
+
+        if not bm25_path.exists():
+            raise FileNotFoundError(
+                f"BM25 index not found: {bm25_path}\n"
+                "Run the ingestion pipeline (ingest_repo.py) to build the index."
+            )
 
         logger.info("Loading BM25 index: path=%s", bm25_path)
         with open(bm25_path, "rb") as f:
@@ -37,17 +53,44 @@ class SparseRetriever:
             len(self.texts),
         )
 
-        if not bm25_path.exists():
-            raise FileNotFoundError(
-                f"BM25 index not found: {bm25_path}\n"
-                "Run the ingestion pipeline to build the index."
-            )
     def retrieve(self, query: str, top_k: int = 20) -> list[dict]:
         """
-        Retrieve the *top_k* highest-scoring BM25 results for query.
+        Retrieve the top_k highest-scoring BM25 results for query.
 
         """
         logger.debug(
             "Sparse retrieval: query_preview='%s...' top_k=%d", query[:50], top_k
         )
-        return []  # placeholder 
+
+        tokenized_query = query.lower().split()
+        raw_scores: np.ndarray = self.bm25.get_scores(tokenized_query)
+
+        max_score = float(raw_scores.max())
+        if max_score > 0:
+            normalised = raw_scores / max_score
+        else:
+            logger.warning("All BM25 scores are zero — query may be out-of-vocabulary")
+            normalised = raw_scores
+
+        top_indices = np.argsort(normalised)[::-1][:top_k]
+
+        results: list[dict] = []
+        for rank, idx in enumerate(top_indices):
+            if normalised[idx] == 0:
+                break
+            results.append(
+                {
+                    "text": self.texts[idx],
+                    "metadata": self.metadatas[idx],
+                    "score": float(normalised[idx]),
+                    "rank": rank,
+                    "retriever": "sparse",
+                }
+            )
+
+        logger.debug(
+            "Sparse retrieval complete: returned=%d top_score=%.4f",
+            len(results),
+            results[0]["score"] if results else 0.0,
+        )
+        return results
