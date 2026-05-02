@@ -27,3 +27,31 @@ CITATION FORMAT:
   Function-level: [Source: path/to/file.py → function_name()]
   Line-level:     [Source: path/to/file.py, Lines 42–67]
   """
+
+def _format_context(chunks: list[dict]) -> str:
+    """Format retrieved chunks into labelled context blocks for the LLM."""
+    blocks: list[str] = []
+
+    for i, chunk in enumerate(chunks):
+        meta = chunk.get("metadata", {})
+        file_path = meta.get("file_path", "unknown")
+        node_name = meta.get("node_name", meta.get("functions", ""))
+        start_line = meta.get("start_line", "?")
+        end_line = meta.get("end_line", "?")
+        language = meta.get("language", "")
+        rerank_score = chunk.get("rerank_score", chunk.get("score", 0.0))
+
+        header_parts = [f"[CHUNK {i + 1}]", f"Source: {file_path}"]
+        if start_line != "?":
+            header_parts.append(f"Lines: {start_line}–{end_line}")
+        if node_name:
+            header_parts.append(f"Function/Class: {node_name}")
+        header_parts.append(f"Relevance: {rerank_score:.3f}")
+
+        block = (
+            " | ".join(header_parts)
+            + f"\n```{language}\n{chunk['text']}\n```"
+        )
+        blocks.append(block)
+
+    return "\n\n".join(blocks)
