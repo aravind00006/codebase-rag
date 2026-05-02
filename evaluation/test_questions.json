@@ -1,0 +1,37 @@
+[
+  {
+    "question": "How does FastAPI handle request body validation?",
+    "ground_truth_answer": "FastAPI uses Pydantic models for request body validation. When you declare a parameter with a Pydantic BaseModel type, FastAPI automatically validates the incoming JSON, converts types, and returns 422 Unprocessable Entity errors with detailed messages if validation fails.",
+    "ground_truth_contexts": ["fastapi/routing.py", "fastapi/dependencies/utils.py"],
+    "repo": "fastapi",
+    "category": "how_does_work"
+  },
+  {
+    "question": "How does FastAPI implement dependency injection?",
+    "ground_truth_answer": "FastAPI implements dependency injection via the Depends() function. Dependencies are resolved by inspecting function signatures using Python's inspect module. FastAPI builds a dependency graph and resolves dependencies recursively, supporting async dependencies, caching within a request, and yield-based dependencies for cleanup.",
+    "ground_truth_contexts": ["fastapi/dependencies/utils.py", "fastapi/param_functions.py"],
+    "repo": "fastapi",
+    "category": "how_does_work"
+  },
+  {
+    "question": "How does FastAPI handle path parameter type conversion?",
+    "ground_truth_answer": "FastAPI uses Pydantic and Python type annotations for path parameter conversion. When you annotate a path parameter with int, float, or other types, FastAPI automatically converts the string from the URL to the declared type and validates it, returning 422 errors if conversion fails.",
+    "ground_truth_contexts": ["fastapi/routing.py"],
+    "repo": "fastapi",
+    "category": "how_does_work"
+  },
+  {
+    "question": "How does FastAPI generate OpenAPI documentation?",
+    "ground_truth_answer": "FastAPI automatically generates OpenAPI schemas by inspecting route function signatures, type annotations, and Pydantic models. It builds an openapi.json at /openapi.json and serves Swagger UI at /docs and ReDoc at /redoc using these schemas.",
+    "ground_truth_contexts": ["fastapi/openapi/utils.py", "fastapi/applications.py"],
+    "repo": "fastapi",
+    "category": "how_does_work"
+  },
+  {
+    "question": "How does FastAPI handle background tasks?",
+    "ground_truth_answer": "FastAPI supports background tasks via the BackgroundTasks class. You can declare it as a parameter in your path operation function, then call add_task() to register functions that run after returning the response. These run in the same process/thread pool.",
+    "ground_truth_contexts": ["fastapi/background.py"],
+    "repo": "fastapi",
+    "category": "how_does_work"
+  }
+]
