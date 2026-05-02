@@ -138,3 +138,42 @@ def stream_answer(
             yield chunk.content
 
     logger.debug("Streaming complete: token_chunks_yielded=%d", token_count)
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _extract_sources(chunks: list[dict]) -> list[dict]:
+    """Build a deduplicated list of structured source citations from chunks."""
+    sources: list[dict] = []
+    seen: set[str] = set()
+
+    for chunk in chunks:
+        meta = chunk.get("metadata", {})
+        file_path = meta.get("file_path", "")
+        node_name = meta.get("node_name", "")
+
+        key = f"{file_path}:{node_name}"
+        if key in seen:
+            continue
+        seen.add(key)
+
+        preview = chunk["text"]
+        if len(preview) > 200:
+            preview = preview[:200] + "..."
+
+        sources.append(
+            {
+                "file_path": file_path,
+                "function_name": node_name,
+                "start_line": meta.get("start_line", ""),
+                "end_line": meta.get("end_line", ""),
+                "language": meta.get("language", ""),
+                "chunk_preview": preview,
+                "score": chunk.get("rerank_score", chunk.get("score", 0.0)),
+            }
+        )
+
+    logger.debug("Extracted %d unique source citations", len(sources))
+    return sources
