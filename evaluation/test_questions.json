@@ -33,5 +33,110 @@
     "ground_truth_contexts": ["fastapi/background.py"],
     "repo": "fastapi",
     "category": "how_does_work"
+  },
+  {
+    "question": "Where is the main routing logic implemented in FastAPI?",
+    "ground_truth_answer": "FastAPI's main routing logic is implemented in fastapi/routing.py. The APIRouter class and APIRoute class handle route registration, parameter resolution, and response processing. The FastAPI application class in fastapi/applications.py inherits from Starlette and uses APIRouter.",
+    "ground_truth_contexts": ["fastapi/routing.py"],
+    "repo": "fastapi",
+    "category": "where_implemented"
+  },
+  {
+    "question": "Where is exception handling implemented in FastAPI?",
+    "ground_truth_answer": "FastAPI's exception handling is in fastapi/exception_handlers.py for built-in handlers, and fastapi/exceptions.py for exception class definitions. HTTPException and RequestValidationError are the main exception types. The app.add_exception_handler() method registers custom handlers.",
+    "ground_truth_contexts": ["fastapi/exception_handlers.py", "fastapi/exceptions.py"],
+    "repo": "fastapi",
+    "category": "where_implemented"
+  },
+  {
+    "question": "Where is the security and authentication logic in FastAPI?",
+    "ground_truth_answer": "Security utilities are in fastapi/security/. This includes OAuth2 (oauth2.py), HTTP Basic/Bearer auth (http.py), API key handling (api_key.py), and OpenID Connect (open_id_connect_url.py). These are all implemented as FastAPI dependencies.",
+    "ground_truth_contexts": ["fastapi/security/"],
+    "repo": "fastapi",
+    "category": "where_implemented"
+  },
+  {
+    "question": "Where are middleware utilities defined in FastAPI?",
+    "ground_truth_answer": "FastAPI inherits middleware support from Starlette. Custom middleware can be added via app.add_middleware(). FastAPI's own middleware-related code is minimal; it delegates to Starlette's middleware stack in starlette/middleware/.",
+    "ground_truth_contexts": ["fastapi/applications.py"],
+    "repo": "fastapi",
+    "category": "where_implemented"
+  },
+  {
+    "question": "Where is response model serialization implemented?",
+    "ground_truth_answer": "Response model serialization is handled in fastapi/routing.py within the serialize_response() function and related utilities. It uses Pydantic's model validation to filter and serialize response data according to the declared response_model.",
+    "ground_truth_contexts": ["fastapi/routing.py"],
+    "repo": "fastapi",
+    "category": "where_implemented"
+  },
+  {
+    "question": "What does the get_dependant function do in FastAPI?",
+    "ground_truth_answer": "The get_dependant() function in fastapi/dependencies/utils.py analyzes a callable's signature to extract all its dependencies, path parameters, query parameters, body fields, and header fields. It returns a Dependant object that describes everything the dependency resolver needs to inject into the function.",
+    "ground_truth_contexts": ["fastapi/dependencies/utils.py"],
+    "repo": "fastapi",
+    "category": "what_does_function_do"
+  },
+  {
+    "question": "What does the solve_dependencies function do?",
+    "ground_truth_answer": "solve_dependencies() in fastapi/dependencies/utils.py recursively resolves the dependency graph for a request. It calls each dependency function with its own resolved dependencies, handles async vs sync dependencies, manages the dependency cache to avoid duplicate calls, and collects any background tasks.",
+    "ground_truth_contexts": ["fastapi/dependencies/utils.py"],
+    "repo": "fastapi",
+    "category": "what_does_function_do"
+  },
+  {
+    "question": "What does the serialize_response function do in FastAPI?",
+    "ground_truth_answer": "serialize_response() filters and validates the response data against the declared response_model. It uses Pydantic to include only fields defined in the response model, handles nested models, applies field aliases, and ensures the output matches the declared schema before sending to the client.",
+    "ground_truth_contexts": ["fastapi/routing.py"],
+    "repo": "fastapi",
+    "category": "what_does_function_do"
+  },
+  {
+    "question": "What does the generate_unique_id function do in FastAPI routing?",
+    "ground_truth_answer": "generate_unique_id() creates a unique operation ID for each route, used in OpenAPI schema generation. It combines the route's name and HTTP methods to create a unique identifier, which becomes the operationId in the OpenAPI spec and affects generated client code names.",
+    "ground_truth_contexts": ["fastapi/routing.py", "fastapi/utils.py"],
+    "repo": "fastapi",
+    "category": "what_does_function_do"
+  },
+  {
+    "question": "What does the request_params_to_args function do?",
+    "ground_truth_answer": "request_params_to_args() in fastapi/dependencies/utils.py extracts and validates parameters (query, path, header, cookie) from the incoming HTTP request. It coerces types, applies default values, and returns validated values or collects validation errors to be raised as RequestValidationError.",
+    "ground_truth_contexts": ["fastapi/dependencies/utils.py"],
+    "repo": "fastapi",
+    "category": "what_does_function_do"
+  },
+  {
+    "question": "How do I add custom response headers in FastAPI?",
+    "ground_truth_answer": "You can add custom response headers in FastAPI by declaring a Response parameter in your path operation function and calling response.headers['X-Custom-Header'] = 'value'. Alternatively, return a Response or JSONResponse object directly with a headers dict. For all responses on a route, use middleware.",
+    "ground_truth_contexts": ["fastapi/routing.py", "fastapi/responses.py"],
+    "repo": "fastapi",
+    "category": "how_do_i"
+  },
+  {
+    "question": "How do I declare query parameters with validation in FastAPI?",
+    "ground_truth_answer": "Use FastAPI's Query() function as a default value: def read_items(q: str = Query(min_length=3, max_length=50, pattern='^fixedquery$')). Query() supports validation constraints like min_length, max_length, pattern for strings and ge, le for numbers. Required parameters omit a default; optional ones use Query(None).",
+    "ground_truth_contexts": ["fastapi/param_functions.py"],
+    "repo": "fastapi",
+    "category": "how_do_i"
+  },
+  {
+    "question": "How do I use FastAPI with async database connections?",
+    "ground_truth_answer": "Use async database libraries (like databases, SQLAlchemy async, Tortoise ORM) as FastAPI dependencies with yield for connection lifecycle management. Declare an async dependency that yields the connection and FastAPI will handle setup/teardown per request. Use @asynccontextmanager for lifespan events for connection pools.",
+    "ground_truth_contexts": ["fastapi/dependencies/utils.py"],
+    "repo": "fastapi",
+    "category": "how_do_i"
+  },
+  {
+    "question": "How do I implement custom middleware in FastAPI?",
+    "ground_truth_answer": "Create a class with an __init__(self, app) and async __call__(self, scope, receive, send) method following ASGI spec, then register it with app.add_middleware(YourMiddleware). Alternatively, use @app.middleware('http') decorator with an async function taking request and call_next parameters.",
+    "ground_truth_contexts": ["fastapi/applications.py"],
+    "repo": "fastapi",
+    "category": "how_do_i"
+  },
+  {
+    "question": "How do I return a streaming response in FastAPI?",
+    "ground_truth_answer": "Use StreamingResponse from fastapi.responses with a generator function. Pass an async or sync generator that yields bytes or strings, along with media_type. For Server-Sent Events use media_type='text/event-stream'. Example: return StreamingResponse(generate(), media_type='text/plain').",
+    "ground_truth_contexts": ["fastapi/responses.py"],
+    "repo": "fastapi",
+    "category": "how_do_i"
   }
 ]
