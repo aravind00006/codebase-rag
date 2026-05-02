@@ -55,3 +55,39 @@ def _format_context(chunks: list[dict]) -> str:
         blocks.append(block)
 
     return "\n\n".join(blocks)
+
+
+def build_prompt(
+    question: str,
+    retrieved_chunks: list[dict],
+) -> tuple[str, str]:
+    """
+    Build the *(system_prompt, user_prompt)* pair for the LLM.
+
+    Args:
+        question:         The user's natural language question.
+        retrieved_chunks: Re-ranked chunks from the retrieval pipeline.
+
+    Returns:
+        Tuple of ``(system_prompt, user_prompt)`` strings.
+    """
+    if not retrieved_chunks:
+        logger.warning("build_prompt called with zero retrieved chunks")
+
+    context_blocks = _format_context(retrieved_chunks)
+
+    user_prompt = (
+        "CODEBASE CONTEXT:\n"
+        f"{context_blocks}\n\n"
+        f"QUESTION: {question}\n\n"
+        "Please answer the question using ONLY the context provided above. "
+        "Cite your sources for every claim."
+    )
+
+    logger.debug(
+        "Prompt built: chunks=%d context_chars=%d",
+        len(retrieved_chunks),
+        len(context_blocks),
+    )
+
+    return _SYSTEM_PROMPT, user_prompt
