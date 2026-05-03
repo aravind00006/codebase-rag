@@ -165,3 +165,34 @@ def run_ragas_evaluation(
     )
 
     return scores
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+    parser = argparse.ArgumentParser(
+        description="Evaluate a RAG pipeline with RAGAS metrics."
+    )
+    parser.add_argument("--collection", required=True, help="ChromaDB collection name")
+    parser.add_argument("--strategy", default="ast", help="Chunking strategy label")
+    parser.add_argument(
+        "--repo", default="fastapi", help="Repo filter for test questions"
+    )
+    parser.add_argument(
+        "--questions", default="evaluation/test_questions.json"
+    )
+    args = parser.parse_args()
+
+    run_ragas_evaluation(
+        collection_name=args.collection,
+        chunk_strategy=args.strategy,
+        repo_filter=args.repo,
+        questions_file=args.questions,
+    )
