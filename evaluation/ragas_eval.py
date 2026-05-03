@@ -109,3 +109,59 @@ def run_ragas_evaluation(
         len(questions),
         sum(latencies) / len(latencies),
     )
+
+    dataset = Dataset.from_dict(eval_data)
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
+
+    logger.info("Running RAGAS evaluation: metrics=4")
+    ragas_result = evaluate(
+        dataset,
+        metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
+        llm=llm,
+        embeddings=embeddings_model,
+    )
+
+    scores = {
+        "chunk_strategy": chunk_strategy,
+        "collection_name": collection_name,
+        "num_questions": len(questions),
+        "faithfulness": round(float(ragas_result["faithfulness"]), 4),
+        "answer_relevancy": round(float(ragas_result["answer_relevancy"]), 4),
+        "context_precision": round(float(ragas_result["context_precision"]), 4),
+        "context_recall": round(float(ragas_result["context_recall"]), 4),
+        "avg_latency_ms": round(sum(latencies) / len(latencies)),
+        "min_latency_ms": min(latencies),
+        "max_latency_ms": max(latencies),
+    }
+
+    with open(output_file, "w") as f:
+        json.dump(scores, f, indent=2)
+
+    logger.info(
+        "RAGAS evaluation complete: faithfulness=%.3f relevancy=%.3f "
+        "precision=%.3f recall=%.3f avg_latency_ms=%d saved=%s",
+        scores["faithfulness"],
+        scores["answer_relevancy"],
+        scores["context_precision"],
+        scores["context_recall"],
+        scores["avg_latency_ms"],
+        output_file,
+    )
+
+    print(
+        f"\n{'─'*52}\n"
+        f"  RAGAS Evaluation Complete\n"
+        f"{'─'*52}\n"
+        f"  Strategy          : {chunk_strategy}\n"
+        f"  Questions         : {len(questions)}\n"
+        f"  Faithfulness      : {scores['faithfulness']:.3f}\n"
+        f"  Answer Relevancy  : {scores['answer_relevancy']:.3f}\n"
+        f"  Context Precision : {scores['context_precision']:.3f}\n"
+        f"  Context Recall    : {scores['context_recall']:.3f}\n"
+        f"  Avg Latency       : {scores['avg_latency_ms']} ms\n"
+        f"{'─'*52}\n"
+        f"  Saved → {output_file}\n"
+    )
+
+    return scores
