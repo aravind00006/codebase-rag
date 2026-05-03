@@ -196,3 +196,79 @@ def run_ablation_study(
     _print_summary(all_results, output_csv)
 
     return all_results
+
+def _write_csv(results: list[dict], path: str) -> None:
+    fieldnames = [
+        "strategy", "faithfulness", "answer_relevancy",
+        "context_precision", "context_recall",
+        "avg_retrieval_latency_ms", "avg_answer_latency_ms", "total_tokens",
+    ]
+    with open(path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(results)
+    logger.info("CSV saved: path=%s", path)
+
+
+def _write_json(results: list[dict], path: str) -> None:
+    with open(path, "w") as f:
+        json.dump(results, f, indent=2)
+    logger.info("JSON saved: path=%s", path)
+
+
+def _print_summary(results: list[dict], csv_path: str) -> None:
+    """Print a human-readable comparison table to stdout."""
+    print(
+        f"\n{'='*80}\n"
+        f"  ABLATION STUDY — RESULTS\n"
+        f"{'='*80}\n"
+        f"  {'Strategy':<12} {'Faithful':>10} {'Relevancy':>10} "
+        f"{'Precision':>10} {'Recall':>10} {'Latency':>10}\n"
+        f"  {'-'*68}"
+    )
+    for r in results:
+        if r.get("error"):
+            print(f"  {r['strategy']:<12}  ERROR: {r['error']}")
+        else:
+            print(
+                f"  {r['strategy']:<12}"
+                f"{r['faithfulness']:>10.3f}"
+                f"{r['answer_relevancy']:>10.3f}"
+                f"{r['context_precision']:>10.3f}"
+                f"{r['context_recall']:>10.3f}"
+                f"{r['avg_answer_latency_ms']:>9}ms"
+            )
+
+    valid = [r for r in results if not r.get("error")]
+    if valid:
+        winner = max(valid, key=lambda r: r["faithfulness"])
+        print(
+            f"\n  [winner] {winner['strategy'].upper()}  "
+            f"faithfulness={winner['faithfulness']:.3f}"
+        )
+
+    print(f"\n  Results -> {csv_path}\n{'='*80}\n")
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+    parser = argparse.ArgumentParser(
+        description="Ablation study: compare 4 chunking strategies with RAGAS."
+    )
+    parser.add_argument(
+        "--repo",
+        required=True,
+        help="Repo identifier matching the 'repo' field in test_questions.json",
+    )
+    parser.add_argument(
+        "--questions",
+        default="evaluation/test_questions.json",
+    )
+    args = parser.parse_args()
+
+    run_ablation_study(repo_name=args.repo, questions_file=args.questions)
