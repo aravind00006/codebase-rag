@@ -20,6 +20,12 @@ from ingestion.embedder import check_if_indexed, embed_and_store, get_collection
 from ingestion.file_parser import parse_documents
 from ingestion.repo_loader import RepoLoader
 import ingestion.chunkers.ast_based as ast_chunker
+from generation.answer_generator import generate_answer
+from generation.prompt_builder import build_prompt
+from ingestion.embedder import get_collection_name
+from retrieval.hybrid_retriever import HybridRetriever
+from retrieval.reranker import Reranker
+
 
 load_dotenv()
 
@@ -192,3 +198,111 @@ def index_repository(req: IndexRequest):
             "Indexing failed: repo_url=%s error=%s", req.repo_url, exc, exc_info=True
         )
         raise HTTPException(status_code=500, detail=str(exc))
+    
+
+@app.post("/query", response_model=QueryResponse, tags=["query"])
+def query_repository(req: QueryRequest):
+    """
+    Answer a natural language question about an indexed repository.
+
+    """
+
+    collection_name = get_collection_name(req.repo_name, req.chunk_strategy)
+
+    logger.info(
+        "Query received: repo=%s strategy=%s question_preview='%s...'",
+        req.repo_name,
+        req.chunk_strategy,
+        req.question[:60],
+    )
+
+    try:
+        retriever = HybridRetriever(
+            collection_name=collection_name,
+            persist_dir=req.persist_dir,
+            bm25_dir=req.bm25_dir,
+            alpha=req.alpha,
+        )
+    except Exception as exc:
+        logger.warning(
+            "Collection not found: collection=%s error=%s", collection_name, exc
+        )
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Collection '{collection_name}' not found. "
+                "Index the repository first via POST /index."
+            ),
+        )
+
+    reranker = Reranker(top_k=req.top_k)
+
+    raw_results = retriever.retrieve(req.question, top_k=20)
+    reranked = reranker.rerank(req.question, raw_results)
+
+    logger.info(
+        "Retrieval complete: raw=%d reranked=%d", len(raw_results), len(reranked)
+    )
+
+    sys_prompt, user_prompt = build_prompt(req.question, reranked)
+    result = generate_answer(sys_prompt, user_prompt, reranked, model=req.model)
+
+    logger.info(
+        "Response ready: latency_ms=%d tokens=%d sources=%d",
+        result["latency_ms"],
+        result.get("tokens_used", 0),
+        len(result["sources"]),
+    )
+
+    return QueryResponse(
+        answer=result["answer"],
+        sources=[SourceInfo(**s) for s in result["sources"]],
+        tokens_used=result.get("tokens_used", 0),
+        latency_ms=result["latency_ms"],
+        model=result["model"],
+    )
+
+
+@app.get("/eval/results", tags=["evaluation"])
+def get_eval_results():
+    """Return stored RAGAS scores and ablation study results."""
+    logger.info("Eval results requested")
+    results: dict = {}
+
+    ragas_path = Path("evaluation/results/ragas_scores.json")
+    if ragas_path.exists():
+        with open(ragas_path) as f:
+            results["ragas_scores"] = json.load(f)
+        logger.debug("RAGAS scores loaded from %s", ragas_path)
+
+    ablation_path = Path("evaluation/results/ablation_results.json")
+    if ablation_path.exists():
+        with open(ablation_path) as f:
+            results["ablation_table"] = json.load(f)
+        logger.debug("Ablation results loaded from %s", ablation_path)
+
+    if not results:
+        logger.warning("No evaluation results found on disk")
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "No evaluation results found. "
+                "Run evaluation/ragas_eval.py or evaluation/ablation_study.py first."
+            ),
+        )
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Dev server
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+        datefmt="%H:%M:%S",
+    )
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
