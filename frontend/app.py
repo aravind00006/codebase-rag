@@ -66,6 +66,7 @@ with st.sidebar:
     chunk_strategy = st.selectb
 
 
+
 tab_qa, tab_eval = st.tabs(["Q&A", "Evaluation"])
 
 with tab_qa:
