@@ -59,7 +59,7 @@ def run_repl(
             f"Run: python ingest_repo.py --url <repo_url> --strategy {strategy}"
         ) from exc
     
-    # feat(cli): implement interactive question loop with retrieval, reranking, and answer display
+    # implement interactive question loop with retrieval, reranking, and answer display
 
     print(
         f"\n  {'-'*52}\n"
@@ -111,3 +111,69 @@ def run_repl(
         except Exception as exc:
             logger.error("Query failed: %s", exc, exc_info=True)
             print(f"\n  [error] {exc}\n")
+
+#add answer/source printer and argparse entrypoint with clean error handling
+
+def _print_result(result: dict) -> None:
+    """Print the answer and source citations to stdout."""
+    print(
+        f"\n  {'-'*60}\n"
+        f"  Answer  ({result['latency_ms']} ms · "
+        f"{result.get('tokens_used', '?')} tokens · {result['model']})\n"
+        f"  {'-'*60}\n"
+    )
+    for line in result["answer"].splitlines():
+        print(f"  {line}")
+
+    if result["sources"]:
+        print(f"\n  Sources ({len(result['sources'])}):")
+        for i, src in enumerate(result["sources"]):
+            fn = f" -> {src['function_name']}()" if src.get("function_name") else ""
+            score = f"  [{src['score']:.3f}]" if src.get("score") else ""
+            print(f"    [{i+1}] {src['file_path']}{fn}{score}")
+
+    print(f"\n  {'-'*60}\n")
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+    parser = argparse.ArgumentParser(
+        description="Interactive Q&A CLI for indexed repositories."
+    )
+    parser.add_argument(
+        "--repo", required=True, help="Repository name (e.g. tiangolo_fastapi)"
+    )
+    parser.add_argument(
+        "--strategy",
+        choices=["fixed", "recursive", "ast", "semantic"],
+        default="ast",
+    )
+    parser.add_argument(
+        "--alpha",
+        type=float,
+        default=0.7,
+        help="Dense/sparse balance: 0.0 = pure BM25, 1.0 = pure semantic",
+    )
+    parser.add_argument("--model", default="gpt-4o-mini")
+    parser.add_argument("--persist-dir", default="./chroma_db")
+    parser.add_argument("--bm25-dir", default="./bm25_indexes")
+    args = parser.parse_args()
+
+    try:
+        run_repl(
+            repo=args.repo,
+            strategy=args.strategy,
+            alpha=args.alpha,
+            model=args.model,
+            persist_dir=args.persist_dir,
+            bm25_dir=args.bm25_dir,
+        )
+    except ValueError as exc:
+        logger.error("Startup failed: %s", exc)
+        print(f"\n  [error] {exc}\n")
+        sys.exit(1)
