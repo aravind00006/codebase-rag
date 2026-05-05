@@ -1,0 +1,43 @@
+version: "3.9"
+
+
+services:
+
+  api:
+    build:
+      context: .
+      args:
+        MODE: api
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-}
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT:-rag-codebase-qa}
+    volumes:
+      # Persist index data between container restarts
+      - ./chroma_db:/app/chroma_db
+      - ./bm25_indexes:/app/bm25_indexes
+      - ./repos:/app/repos
+      - ./evaluation/results:/app/evaluation/results
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      args:
+        MODE: ui
+    ports:
+      - "7860:7860"
+    environment:
+      - API_BASE_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
