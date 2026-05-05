@@ -4,10 +4,9 @@ semantic.py — Strategy 4: Semantic similarity-based chunking.
 Groups sentences into chunks by embedding each sentence with
 sentence-transformers.
 """
-
+from __future__ import annotations
 import logging
 import numpy as np
-from __future__ import annotations
 from langchain_core.documents import Document
 
 logger = logging.getLogger(__name__)

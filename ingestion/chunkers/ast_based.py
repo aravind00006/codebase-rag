@@ -7,12 +7,10 @@ each chunk is always a complete, syntactically valid unit.
 
 """
 
-
-
+from __future__ import annotations
 import ast
 import logging
 import textwrap
-from __future__ import annotations
 from langchain_core.documents import Document
 from ingestion.chunkers import recursive as recursive_chunker
 

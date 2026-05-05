@@ -4,10 +4,9 @@ token-window chunking splits everything into 512-token
 windows with 50-token overlap main downside: doesn't care
 about code structure, can cut mid-function used as the baseline.
 """
-
+from __future__ import annotations
 import logging
 import tiktoken
-from __future__ import annotations
 from langchain_core.documents import Document
 from langchain_text_splitters import TokenTextSplitter
 

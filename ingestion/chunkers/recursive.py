@@ -4,9 +4,8 @@ recursive.py — Strategy 2: Recursive character text splitting.
 Uses LangChain's ``RecursiveCharacterTextSplitter`` with code-aware
 separators.  The splitter tries each separator in order and only falls
 """
-
-import logging
 from __future__ import annotations
+import logging
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
