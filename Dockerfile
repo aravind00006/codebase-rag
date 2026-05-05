@@ -1,0 +1,43 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Dockerfile — RAG Codebase Q&A
+# ──────────────────────────────────────────────────────────────────────────────
+
+FROM python:3.11-slim AS base
+
+# System dependencies for gitpython + sentence-transformers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+"""
+Install Python dependencies before copying source so 
+Docker layer cache is reused on source-only changes.
+"""
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source
+COPY . .
+
+# Create runtime directories that are typically volume-mounted in production
+RUN mkdir -p chroma_db bm25_indexes repos evaluation/results
+
+# ── Default command — overrideable at runtime ─────────────────────────────────
+# docker run ... rag-codebase-qa api    → starts FastAPI
+# docker run ... rag-codebase-qa ui     → starts Streamlit
+# docker run ... rag-codebase-qa ingest → runs ingestion CLI
+ARG MODE=api
+ENV MODE=${MODE}
+
+EXPOSE 8000 7860
+
+CMD if [ "$MODE" = "api" ]; then \
+        uvicorn api.main:app --host 0.0.0.0 --port 8000; \
+    elif [ "$MODE" = "ui" ]; then \
+        streamlit run frontend/app.py --server.port=7860 --server.address=0.0.0.0; \
+    else \
+        echo "Unknown MODE: $MODE. Use 'api' or 'ui'."; exit 1; \
+    fi
