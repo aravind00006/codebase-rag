@@ -4,11 +4,11 @@
 
 # ── LLM & Orchestration ───────────────────────────────────────────────────────
 langchain==0.2.16
-langchain-openai==0.1.23
+langchain-openai==0.1.25
 langchain-community==0.2.16
 langchain-text-splitters==0.2.4
 langsmith==0.1.117
-openai==1.30.0
+openai==1.45.0
 
 # ── Vector DB ─────────────────────────────────────────────────────────────────
 chromadb==0.5.7
