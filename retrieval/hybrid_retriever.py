@@ -4,10 +4,9 @@ combining dense and sparse signals.
 
 """
 
-
+from __future__ import annotations
 
 import logging
-from __future__ import annotations
 from retrieval.dense_retriever import DenseRetriever
 from retrieval.sparse_retriever import SparseRetriever
 

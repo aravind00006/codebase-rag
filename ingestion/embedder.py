@@ -2,6 +2,7 @@
 Generate embeddings and persist to ChromaDB and BM25.
 
 """
+from __future__ import annotations
 
 import json
 import time
@@ -11,7 +12,6 @@ import logging
 import chromadb
 from pathlib import Path
 from typing import Final
-from __future__ import annotations
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 from rank_bm25 import BM25Okapi

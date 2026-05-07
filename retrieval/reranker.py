@@ -5,9 +5,10 @@ pairs — unlike bi-encoders that embed them independently.
 
 """
 
+from __future__ import annotations
+
 import logging
 import numpy as np
-from __future__ import annotations
 from sentence_transformers import CrossEncoder
 
 logger = logging.getLogger(__name__)

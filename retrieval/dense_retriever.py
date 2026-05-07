@@ -9,7 +9,6 @@ import os
 import logging
 import chromadb
 from typing import Optional
-from __future__ import annotations
 from langchain_openai import OpenAIEmbeddings
 
 logger = logging.getLogger(__name__)
