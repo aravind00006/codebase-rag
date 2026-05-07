@@ -27,46 +27,46 @@ Navigating an unfamiliar codebase to answer a simple question can take hours. Th
 ## 🏗 Architecture
 
 ```
-GitHub Repo URL
-       │
-       ▼
-┌──────────────────────────────────────────────────────────────┐
-│                     INGESTION PIPELINE                       │
-│                                                              │
-│   repo_loader.py  →  file_parser.py  →  chunker  →  embedder │
-│                                                              │
-│   Strategies: [ Fixed-512 | Recursive | AST | Semantic ]     │
-│   Storage:    ChromaDB (dense vectors) + BM25 (sparse index) │
-└───────────────────────────┬──────────────────────────────────┘
-                            │
-                            ▼
-┌──────────────────────────────────────────────────────────────┐
-│                     RETRIEVAL ENGINE                         │
-│                                                              │
-│   Dense Retrieval (text-embedding-3-small, top-20)           │
-│         +                                                    │
-│   Sparse Retrieval (BM25, top-20)                            │
-│         │                                                    │
-│         ▼                                                    │
-│   Reciprocal Rank Fusion → top-10                            │
-│         │                                                    │
-│         ▼                                                    │
-│   Cross-Encoder Re-ranking (ms-marco-MiniLM-L-6-v2) → top-5  │
-└───────────────────────────┬──────────────────────────────────┘
-                            │
-                            ▼
-┌──────────────────────────────────────────────────────────────┐
-│                    GENERATION LAYER                          │
-│                                                              │
-│   Structured Prompt Builder (context + citations)            │
-│         +                                                    │
-│   GPT-4o-mini with streaming + exponential backoff           │
-│         +                                                    │
-│   LangSmith observability on every LLM call                  │
-└───────────────────────────┬──────────────────────────────────┘
-                            │
-                            ▼
-               Cited Answer + Source Files + Line Numbers
+                                                      GitHub Repo URL
+                                                            │
+                                                            ▼
+                                ┌──────────────────────────────────────────────────────────────┐
+                                │                     INGESTION PIPELINE                       │
+                                │                                                              │
+                                │   repo_loader.py  →  file_parser.py  →  chunker  →  embedder │
+                                │                                                              │
+                                │   Strategies: [ Fixed-512 | Recursive | AST | Semantic ]     │
+                                │   Storage:    ChromaDB (dense vectors) + BM25 (sparse index) │
+                                └───────────────────────────┬──────────────────────────────────┘
+                                                            │
+                                                            ▼
+                                ┌──────────────────────────────────────────────────────────────┐
+                                │                     RETRIEVAL ENGINE                         │
+                                │                                                              │
+                                │   Dense Retrieval (text-embedding-3-small, top-20)           │
+                                │         +                                                    │
+                                │   Sparse Retrieval (BM25, top-20)                            │
+                                │         │                                                    │
+                                │         ▼                                                    │
+                                │   Reciprocal Rank Fusion → top-10                            │
+                                │         │                                                    │
+                                │         ▼                                                    │
+                                │   Cross-Encoder Re-ranking (ms-marco-MiniLM-L-6-v2) → top-5  │
+                                └───────────────────────────┬──────────────────────────────────┘
+                                                            │
+                                                            ▼
+                                ┌──────────────────────────────────────────────────────────────┐
+                                │                    GENERATION LAYER                          │
+                                │                                                              │
+                                │   Structured Prompt Builder (context + citations)            │
+                                │         +                                                    │
+                                │   GPT-4o-mini with streaming + exponential backoff           │
+                                │         +                                                    │
+                                │   LangSmith observability on every LLM call                  │
+                                └───────────────────────────┬──────────────────────────────────┘
+                                                            │
+                                                            ▼
+                                        Cited Answer + Source Files + Line Numbers
 ```
 
 ---
