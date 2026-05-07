@@ -72,8 +72,14 @@ class IndexResponse(BaseModel):
 
 
 class QueryRequest(BaseModel):
+    """
+    A query must identify the target repo via *either* ``repo_url`` (full
+    GitHub URL) *or* ``repo_name`` (the ``owner_repo`` slug). If both are
+    given, ``repo_url`` wins and the slug is recomputed from it.
+    """
     question: str
-    repo_name: str
+    repo_url: str | None = None
+    repo_name: str | None = None
     chunk_strategy: Literal["fixed", "recursive", "ast", "semantic"] = "ast"
     top_k: int = 5
     alpha: float = 0.7
@@ -85,8 +91,8 @@ class QueryRequest(BaseModel):
 class SourceInfo(BaseModel):
     file_path: str
     function_name: str
-    start_line: str | None = None
-    end_line: str | None = None
+    start_line: str |  int | None = None
+    end_line: str |  int | None = None
     language: str
     chunk_preview: str
     score: float
@@ -101,11 +107,12 @@ class QueryResponse(BaseModel):
 
 
 def _extract_repo_name(repo_url: str) -> str:
-    """Derive a ``owner_repo`` identifier from a GitHub URL."""
-    parts = repo_url.rstrip("/").split("/")
-    if len(parts) >= 2:
-        return f"{parts[-2]}_{parts[-1]}"
-    return parts[-1]
+    """Derive a ``owner_repo`` identifier from a GitHub URL.
+
+    Thin wrapper around :py:meth:`RepoLoader._extract_repo_name` so the URL
+    parsing logic lives in exactly one place.
+    """
+    return RepoLoader._extract_repo_name(repo_url)
 
 
 @app.get("/health", tags=["ops"])
@@ -207,11 +214,23 @@ def query_repository(req: QueryRequest):
 
     """
 
-    collection_name = get_collection_name(req.repo_name, req.chunk_strategy)
+    # Resolve the repo identifier from whichever field the client provided.
+    # repo_url wins if both are given, since it is the canonical source.
+    if req.repo_url:
+        repo_name = _extract_repo_name(req.repo_url)
+    elif req.repo_name:
+        repo_name = req.repo_name
+    else:
+        raise HTTPException(
+            status_code=422,
+            detail="Either 'repo_url' or 'repo_name' must be provided.",
+        )
+
+    collection_name = get_collection_name(repo_name, req.chunk_strategy)
 
     logger.info(
         "Query received: repo=%s strategy=%s question_preview='%s...'",
-        req.repo_name,
+        repo_name,
         req.chunk_strategy,
         req.question[:60],
     )
