@@ -1,4 +1,3 @@
-
 ---
 title: Codebase RAG  Q&A
 emoji: 🔍
@@ -23,7 +22,7 @@ answers grounded in real source code.**
 [![RAGAS](https://img.shields.io/badge/RAGAS-Evaluated-4CAF50?style=flat-square)](https://docs.ragas.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-[**Live Demo**](https://huggingface.co/spaces/YOUR_USERNAME/rag-codebase-qa) · [**Evaluation Results**](#-evaluation-results) · [**Architecture**](#-architecture) · [**Quick Start**](#-quick-start)
+[**🤗 Live Demo**](https://huggingface.co/spaces/Aravind-007/rag-codebase) · [**Evaluation Results**](#-evaluation-results) · [**Architecture**](#-architecture) · [**Quick Start**](#-quick-start)
 
 </div>
 
@@ -35,49 +34,65 @@ Navigating an unfamiliar codebase to answer a simple question can take hours. Th
 
 ---
 
+## 📸 Screenshots
+
+### Live on Hugging Face Spaces
+![HuggingFace](screenshots/Screenshot_2026-05-08_065631.png)
+
+### UI — Index & Query
+![UI](screenshots/Screenshot_2026-05-08_070336.png)
+
+### Answer with Code Citations
+![Answer](screenshots/Screenshot_2026-05-08_070517.png)
+
+### Answer Detail & Sources
+![Sources](screenshots/Screenshot_2026-05-08_070543.png)
+
+---
+
 ## 🏗 Architecture
 
 ```
-                                                GitHub Repo URL
-                                                      │
-                                                      ▼
-                          ┌──────────────────────────────────────────────────────────────┐
-                          │                     INGESTION PIPELINE                       │
-                          │                                                              │
-                          │   repo_loader.py  →  file_parser.py  →  chunker  →  embedder │
-                          │                                                              │
-                          │   Strategies: [ Fixed-512 | Recursive | AST | Semantic ]     │
-                          │   Storage:    ChromaDB (dense vectors) + BM25 (sparse index) │
-                          └───────────────────────────┬──────────────────────────────────┘
-                                                      │
-                                                      ▼
-                          ┌──────────────────────────────────────────────────────────────┐
-                          │                     RETRIEVAL ENGINE                         │
-                          │                                                              │
-                          │   Dense Retrieval (text-embedding-3-small, top-20)           │
-                          │         +                                                    │
-                          │   Sparse Retrieval (BM25, top-20)                            │
-                          │         │                                                    │
-                          │         ▼                                                    │
-                          │   Reciprocal Rank Fusion → top-10                            │
-                          │         │                                                    │
-                          │         ▼                                                    │
-                          │   Cross-Encoder Re-ranking (ms-marco-MiniLM-L-6-v2) → top-5  │
-                          └───────────────────────────┬──────────────────────────────────┘
-                                                      │
-                                                      ▼
-                          ┌──────────────────────────────────────────────────────────────┐
-                          │                    GENERATION LAYER                          │
-                          │                                                              │
-                          │   Structured Prompt Builder (context + citations)            │
-                          │         +                                                    │
-                          │   GPT-4o-mini with streaming + exponential backoff           │
-                          │         +                                                    │
-                          │   LangSmith observability on every LLM call                  │
-                          └───────────────────────────┬──────────────────────────────────┘
-                                                      │
-                                                      ▼
-                                  Cited Answer + Source Files + Line Numbers
+                                              GitHub Repo URL
+                                                    │
+                                                    ▼
+                        ┌──────────────────────────────────────────────────────────────┐
+                        │                     INGESTION PIPELINE                       │
+                        │                                                              │
+                        │   repo_loader.py  →  file_parser.py  →  chunker  →  embedder │
+                        │                                                              │
+                        │   Strategies: [ Fixed-512 | Recursive | AST | Semantic ]     │
+                        │   Storage:    ChromaDB (dense vectors) + BM25 (sparse index) │
+                        └───────────────────────────┬──────────────────────────────────┘
+                                                    │
+                                                    ▼
+                        ┌──────────────────────────────────────────────────────────────┐
+                        │                     RETRIEVAL ENGINE                         │
+                        │                                                              │
+                        │   Dense Retrieval (text-embedding-3-small, top-20)           │
+                        │         +                                                    │
+                        │   Sparse Retrieval (BM25, top-20)                            │
+                        │         │                                                    │
+                        │         ▼                                                    │
+                        │   Reciprocal Rank Fusion → top-10                            │
+                        │         │                                                    │
+                        │         ▼                                                    │
+                        │   Cross-Encoder Re-ranking (ms-marco-MiniLM-L-6-v2) → top-5  │
+                        └───────────────────────────┬──────────────────────────────────┘
+                                                    │
+                                                    ▼
+                        ┌──────────────────────────────────────────────────────────────┐
+                        │                    GENERATION LAYER                          │
+                        │                                                              │
+                        │   Structured Prompt Builder (context + citations)            │
+                        │         +                                                    │
+                        │   GPT-4o-mini with streaming + exponential backoff           │
+                        │         +                                                    │
+                        │   LangSmith observability on every LLM call                  │
+                        └───────────────────────────┬──────────────────────────────────┘
+                                                    │
+                                                    ▼
+                                Cited Answer + Source Files + Line Numbers
 ```
 
 ---
@@ -183,6 +198,7 @@ rag-codebase-qa/
 │   ├── 02_retrieval_experiments.ipynb
 │   └── 03_evaluation_results.ipynb
 │
+├── screenshots/                # UI screenshots
 ├── ingest_repo.py              # CLI: index a repo with chosen strategy
 ├── query_cli.py                # CLI: interactive Q&A loop
 ├── docker-compose.yml          # API + frontend containers
@@ -215,7 +231,7 @@ pip install -r requirements.txt
 ### 2. Configure Environment
 
 ```bash
-cp .env
+cp .env.example .env
 # Open .env and add your API keys
 ```
 
@@ -299,7 +315,7 @@ You can explore and test all endpoints interactively via the auto-generated docs
 
 ## 🔮 Planned Improvements
 
-- [ ] **Document upload support** — In the next version, you'll be able to upload PDF or `.doc` files — like a coding book or a standalone `.py` file — and ask questions directly on that content, without needing a GitHub repo.
+- [ ] **Document upload support** — Upload PDF or `.doc` files and ask questions directly on that content, without needing a GitHub repo.
 - [ ] **Pinecone for production** — Replace ChromaDB with Pinecone for multi-tenant deployments with per-repo namespace isolation.
 
 ---
