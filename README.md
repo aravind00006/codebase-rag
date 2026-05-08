@@ -27,16 +27,16 @@ Navigating an unfamiliar codebase to answer a simple question can take hours. Th
 ## 📸 Screenshots
 
 ### Live on Hugging Face Spaces
-![HuggingFace](Screenshot 2026-05-08 065631.png)
+![HuggingFace](screenshots/Screenshot_2026-05-08_065631.png)
 
 ### UI — Index & Query
-![UI](screenshots/Screenshot_2026-05-08 070336.png)
+![UI](screenshots/Screenshot_2026-05-08_070336.png)
 
 ### Answer with Code Citations
-![Answer](screenshots/Screenshot_2026-05-08 070517.png)
+![Answer](screenshots/Screenshot_2026-05-08_070517.png)
 
 ### Answer Detail & Sources
-![Sources](screenshots/Screenshot_2026-05-08 070543.png)
+![Sources](screenshots/Screenshot_2026-05-08_070543.png)
 
 ---
 
