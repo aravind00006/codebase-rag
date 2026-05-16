@@ -133,13 +133,13 @@ class RepoLoader:
 
     @staticmethod
     def _extract_repo_name(url: str) -> str:
-        """Return ``owner_repo`` slug from a GitHub URL."""
+        """Return owner_repo slug from a GitHub URL."""
         url = url.rstrip("/").removesuffix(".git")
         parts = url.split("/")
         return f"{parts[-2]}_{parts[-1]}" if len(parts) >= 2 else parts[-1]
 
     def _walk_repo(self, local_path: Path, repo_name: str) -> list[Document]:
-        """Recursively walk *local_path* and return one Document per valid file."""
+        """Recursively walk local_path and return one Document per valid file."""
         documents: list[Document] = []
         skipped_large = 0
         skipped_unreadable = 0
