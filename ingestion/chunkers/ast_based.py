@@ -73,9 +73,9 @@ def chunk_documents(documents: list[Document]) -> list[Document]:
 
 def _chunk_python(doc: Document) -> list[Document] | None:
     """
-    Parse *doc* with ``ast`` and return one chunk per top-level node.
+    Parse doc with ast and return one chunk per top-level node.
 
-    Returns ``None`` if the file cannot be parsed (syntax error).
+    Returns None if the file cannot be parsed (syntax error).
     """
     source = doc.page_content
     file_path = doc.metadata.get("file_path", "unknown")

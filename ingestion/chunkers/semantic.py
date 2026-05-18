@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import numpy as np
 from langchain_core.documents import Document
+from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,6 @@ _embed_model = None
 def _get_embed_model() :
     global _embed_model
     if _embed_model is None:
-        from sentence_transformers import SentenceTransformer
         logger.info("Loading sentence-transformer: model=%s", EMBEDDING_MODEL)
         _embed_model = SentenceTransformer(EMBEDDING_MODEL)
         logger.info("Sentence-transformer loaded")

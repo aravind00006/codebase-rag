@@ -1,7 +1,7 @@
 """
 recursive.py — Strategy 2: Recursive character text splitting.
  
-Uses LangChain's ``RecursiveCharacterTextSplitter`` with code-aware
+Uses LangChain's RecursiveCharacterTextSplitter with code-aware
 separators.  The splitter tries each separator in order and only falls
 """
 from __future__ import annotations
