@@ -62,15 +62,9 @@ def build_prompt(
     retrieved_chunks: list[dict],
 ) -> tuple[str, str]:
     """
-    Build the *(system_prompt, user_prompt)* pair for the LLM.
+    Build the (system_prompt, user_prompt) pair for the LLM.
 
-    Args:
-        question:         The user's natural language question.
-        retrieved_chunks: Re-ranked chunks from the retrieval pipeline.
-
-    Returns:
-        Tuple of ``(system_prompt, user_prompt)`` strings.
-    """
+   """
     if not retrieved_chunks:
         logger.warning("build_prompt called with zero retrieved chunks")
 

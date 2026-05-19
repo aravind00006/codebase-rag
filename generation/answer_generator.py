@@ -6,8 +6,9 @@ answer_generator.py — LLM call with streaming, retry logic, and observability.
 import logging
 import os
 import time
-from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage
+
 
 logger = logging.getLogger(__name__)
 
@@ -104,19 +105,8 @@ def stream_answer(
 ):
     """
     Stream answer tokens from the LLM as a generator of strings.
-
-    Args:
-        system_prompt:    Instruction prompt.
-        user_prompt:      Context + question prompt.
-        retrieved_chunks: Unused here — consumed by the caller after streaming.
-        model:            OpenAI model identifier.
-
-    Yields:
-        Successive token strings from the LLM response stream.
     """
-    from langchain_core.messages import HumanMessage, SystemMessage
-    from langchain_openai import ChatOpenAI
-
+    
     logger.debug("Starting streaming response: model=%s", model)
 
     llm = ChatOpenAI(

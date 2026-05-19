@@ -1,7 +1,7 @@
 """
 dense_retriever.py — Semantic search via ChromaDB cosine similarity.
 
-Embeds the user query with the same ``text-embedding-3-small`` model 
+Embeds the user query with the same text-embedding-3-small model 
 used at ingestion time.
 """
 

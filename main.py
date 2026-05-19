@@ -107,11 +107,8 @@ class QueryResponse(BaseModel):
 
 
 def _extract_repo_name(repo_url: str) -> str:
-    """Derive a ``owner_repo`` identifier from a GitHub URL.
-
-    Thin wrapper around :py:meth:`RepoLoader._extract_repo_name` so the URL
-    parsing logic lives in exactly one place.
-    """
+    """Derive a owner_repo identifier from a GitHub URL.
+   """
     return RepoLoader._extract_repo_name(repo_url)
 
 

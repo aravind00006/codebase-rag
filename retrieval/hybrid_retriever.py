@@ -27,13 +27,7 @@ class HybridRetriever:
         bm25_dir: str = "./bm25_indexes",
         alpha: float = 0.7,
     ) -> None:
-        """
-        Args:
-            collection_name: ChromaDB collection and BM25 index name.
-            persist_dir:     ChromaDB persistence directory.
-            bm25_dir:        Directory containing pickled BM25 indexes.
-            alpha:           Dense retrieval weight ∈ [0, 1].
-        """
+
         self.alpha = alpha
         self.dense = DenseRetriever(collection_name, persist_dir)
         self.sparse = SparseRetriever(collection_name, bm25_dir)
@@ -54,16 +48,7 @@ class HybridRetriever:
         Retrieve and RRF-fuse results from dense and sparse retrievers.
 
         Both retrievers fetch 20 candidates each before fusion.
-
-        Args:
-            query:           Natural language question.
-            top_k:           Number of fused results to return.
-            doc_type_filter: Optionally restrict dense retrieval to
-                             ``'code'``, ``'documentation'``, or ``'config'``.
-
-        Returns:
-            List of up to *top_k* result dicts, sorted by descending RRF score.
-        """
+       """
         logger.debug(
             "Hybrid retrieval: query_preview='%s...' top_k=%d alpha=%.2f",
             query[:50],

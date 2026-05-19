@@ -6,7 +6,6 @@ app.py — Streamlit frontend for the RAG Codebase Q&A system.
 import json
 import logging
 import os
-import time
 from pathlib import Path
 import pandas as pd
 import requests
